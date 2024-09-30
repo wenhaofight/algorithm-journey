@@ -46,5 +46,6 @@ public class Test012 {
         }
         leftTail.next = rightHead;
         return leftHead;
+
     }
 }
