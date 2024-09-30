@@ -17,7 +17,7 @@ public class Test018 {
         }
     }
 
-    class Solution {
+    static class Solution {
         public List<Integer> preorderTraversal(TreeNode root) {
             List<Integer> ans = new ArrayList<>();
             if (root == null) {
@@ -37,6 +37,39 @@ public class Test018 {
             }
             return ans;
         }
+
+
+        public List<Integer> inorderTraversal(TreeNode root) {
+            List<Integer> ans = new ArrayList<>();
+            if (root == null) {
+                return ans;
+            }
+            Deque<TreeNode> stack = new LinkedList<>();
+            while (root != null || !stack.isEmpty()) {
+                if (root != null) {
+                    stack.push(root);
+                    root = root.left;
+                } else {
+                    root = stack.pop();
+                    ans.add(root.val);
+                    root = root.right;
+                }
+            }
+            return ans;
+        }
+    }
+
+    public static void main(String[] args) {
+        TreeNode head = new TreeNode(1);
+        head.left = new TreeNode(2);
+        head.right = new TreeNode(3);
+        head.left.left = new TreeNode(4);
+        head.left.right = new TreeNode(5);
+        head.right.left = new TreeNode(6);
+        head.right.right = new TreeNode(7);
+        Solution s = new Solution();
+        List<Integer> list = s.inorderTraversal(head);
+        System.out.println(list);
     }
 }
 
