@@ -57,7 +57,58 @@ public class Test018 {
             }
             return ans;
         }
+
+        public List<Integer> posOrderOneStack(TreeNode root) {
+            List<Integer> ans = new ArrayList<>();
+            if (root == null) {
+                return ans;
+            }
+            Deque<TreeNode> stack = new LinkedList<>();
+            stack.push(root);
+            while (!stack.isEmpty()) {
+                TreeNode cur = stack.peek();
+                if (cur.left != root && cur.right != root && cur.left != null) {
+                    stack.push(cur.left);
+                } else if (cur.right != null && cur.right != root) {
+                    stack.push(cur.right);
+                } else {
+                    root = stack.pop();
+                    ans.add(cur.val);
+                }
+            }
+            return ans;
+        }
     }
+
+    public List<Integer> postorderTraversal(TreeNode root) {
+        List<Integer> ans = new ArrayList<>();
+        if (root == null) {
+            return ans;
+        }
+        Deque<TreeNode> stack = new LinkedList<>();
+        Deque<TreeNode> posStack = new LinkedList<>();
+        stack.push(root);
+        while (!stack.isEmpty()) {
+            root = stack.pop();
+            posStack.push(root);
+            if (root.left != null) {
+                stack.push(root.left);
+            }
+            if (root.right != null) {
+                stack.push(root.right);
+            }
+        }
+        while (!posStack.isEmpty()) {
+            ans.add(posStack.pop().val);
+        }
+        return ans;
+    }
+
+    //      1
+    //   2     3
+    // 4   5  6  7
+    // 4 5 2 6 7 3 1
+
 
     public static void main(String[] args) {
         TreeNode head = new TreeNode(1);
@@ -68,7 +119,7 @@ public class Test018 {
         head.right.left = new TreeNode(6);
         head.right.right = new TreeNode(7);
         Solution s = new Solution();
-        List<Integer> list = s.inorderTraversal(head);
+        List<Integer> list = s.posOrderOneStack(head);
         System.out.println(list);
     }
 }
