@@ -34,7 +34,6 @@ public class Test027 {
             pre = cur;
         }
         return head;
-
     }
 }
 
