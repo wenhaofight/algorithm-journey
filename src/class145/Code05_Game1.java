@@ -6,10 +6,11 @@ package class145;
 // 给定长度为n的数组arr，arr[i]的值表示i号节点由谁拥有，0为小A拥有，1为小B拥有
 // 游戏有m回合，每回合都有胜负，两人需要选择一个自己拥有、但之前没选过的点，作为本回合当前点
 // 小A当前点的子树里有小B当前点，则小A胜；小B当前点的子树里有小A当前点，则小B胜；否则平局
-// 返回m回合里能出现k次非平局的游戏方法数，打印k=0..m时的所有答案，对 998244353 取余
+// 返回m回合里能出现k次非平局的游戏方法数，打印k=0..m时的所有答案，对 998244353 取模
 // 两场游戏视为不同的定义：当且仅当存在小A拥有的点x，小B在小A选择x的那个回合所选择的点不同
 // 测试链接 : https://www.luogu.com.cn/problem/P6478
-// 提交以下的code，提交时请把类名改成"Main"，dfs是递归函数，有时可以通过所有测试用例，有时会爆栈
+// 提交以下的code，提交时请把类名改成"Main"，注意dfs是递归函数
+// C++的同学可以全部通过，java的同学有时可以全部通过，有时因为递归展开太深而爆栈
 // dfs从递归版改迭代版的实现，请看Code05_Game2文件
 
 import java.io.BufferedReader;
@@ -19,7 +20,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintWriter;
-import java.util.Arrays;
 import java.util.StringTokenizer;
 
 public class Code05_Game1 {
@@ -27,6 +27,8 @@ public class Code05_Game1 {
 	public static final int MAXN = 5001;
 
 	public static final int MOD = 998244353;
+
+	public static int n, m;
 
 	public static int[] arr = new int[MAXN];
 
@@ -50,7 +52,7 @@ public class Code05_Game1 {
 
 	public static long[][] dp = new long[MAXN][MAXN];
 
-	public static long[] tmp = new long[MAXN];
+	public static long[] backup = new long[MAXN];
 
 	// 反演需要
 	public static long[] g = new long[MAXN];
@@ -58,11 +60,11 @@ public class Code05_Game1 {
 	// 最后答案
 	public static long[] f = new long[MAXN];
 
-	public static int n, m;
-
 	public static void build() {
+		cnt = 1;
 		fac[0] = 1;
 		for (int i = 1; i <= n; i++) {
+			head[i] = 0;
 			fac[i] = fac[i - 1] * i % MOD;
 		}
 		for (int i = 0; i <= n; i++) {
@@ -71,8 +73,6 @@ public class Code05_Game1 {
 				c[i][j] = (c[i - 1][j] + c[i - 1][j - 1]) % MOD;
 			}
 		}
-		cnt = 1;
-		Arrays.fill(head, 1, n + 1, 0);
 	}
 
 	public static void addEdge(int u, int v) {
@@ -81,42 +81,43 @@ public class Code05_Game1 {
 		head[u] = cnt++;
 	}
 
+	// 递归版
 	public static void dfs(int u, int fa) {
 		size[u] = 1;
 		belong[u][arr[u]] = 1;
 		dp[u][0] = 1;
+		// 首先计算不包含头节点的方法数
 		for (int e = head[u], v; e > 0; e = next[e]) {
 			v = to[e];
 			if (v != fa) {
 				dfs(v, u);
-				// 不包含头节点的方法数，dp[u][..]可以倒推更新，但为了好理解，采用正推更新
-				// tmp数组清空
-				Arrays.fill(tmp, 0, Math.min(size[u] + size[v], m) + 1, 0);
+				// 之前所有子树结合的计算结果，拷贝进backup
+				for (int i = 0; i <= Math.min(size[u] / 2, m); i++) {
+					backup[i] = dp[u][i];
+					dp[u][i] = 0;
+				}
 				// 树型dp的枚举行为利用子树的节点数做上限进行复杂度优化
-				for (int i = 0; i <= Math.min(size[u], m); i++) {
-					for (int j = 0; j <= Math.min(size[v], m - i); j++) {
-						tmp[i + j] = (tmp[i + j] + dp[u][i] * dp[v][j] % MOD) % MOD;
+				for (int l = 0; l <= Math.min(size[u] / 2, m); l++) {
+					for (int r = 0; r <= Math.min(size[v] / 2, m - l); r++) {
+						dp[u][l + r] = (dp[u][l + r] + backup[l] * dp[v][r] % MOD) % MOD;
 					}
 				}
-				// 更新当前节点的信息
 				size[u] += size[v];
 				belong[u][0] += belong[v][0];
 				belong[u][1] += belong[v][1];
-				for (int i = 0; i <= Math.min(size[u], m); i++) {
-					dp[u][i] = tmp[i];
-				}
 			}
 		}
-		// 包含头节点的方法数，dp[u][..]可以倒推更新，但为了好理解，采用正推更新
+		// 最后计算包含头节点的方法数
+		// 更新dp[u][i]，i可以把上限定为min(对手拥有的节点数，m)
 		// u为头的子树中，对手有几个节点
-		int oppCnt = belong[u][arr[u] ^ 1];
-		// 先把不包含头节点的方法数，拷贝到tmp
-		for (int i = 1; i <= Math.min(m, oppCnt); i++) {
-			tmp[i] = dp[u][i];
+		int num = belong[u][arr[u] ^ 1];
+		// 不包含头节点的方法数，拷贝到backup
+		for (int i = 1; i <= Math.min(num, m); i++) {
+			backup[i] = dp[u][i];
 		}
-		// 然后计算包含头节点的方法数，累加上
-		for (int i = 1; i <= Math.min(m, oppCnt); i++) {
-			dp[u][i] = (dp[u][i] + tmp[i - 1] * (oppCnt - i + 1) % MOD) % MOD;
+		// 计算包含头节点的方法数，累加上
+		for (int i = 1; i <= Math.min(num, m); i++) {
+			dp[u][i] = (dp[u][i] + backup[i - 1] * (num - i + 1) % MOD) % MOD;
 		}
 	}
 
